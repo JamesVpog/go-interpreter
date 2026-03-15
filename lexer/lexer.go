@@ -16,25 +16,12 @@ func New(input string) *Lexer {
 	return l
 }
 
-// go to next char in string and advance our position pointers
-func (l *Lexer) readChar() {	
-	// TODO: support unicode/emojis... right now reads each token into one byte
-	if l.readPosition >= len(l.input) {
-		l.ch = 0
-	} else {
-		l.ch = l.input[l.readPosition]
-	}
-	l.position = l.readPosition
-	l.readPosition += 1
-}
-
-func newToken(tokenType token.TokenType, ch byte) token.Token {
-	return token.Token{Type: tokenType, Literal: string(ch)}
-}
 
 func (l *Lexer) NextToken() token.Token {
 	// return the token of the current character under examination (l.ch)
 	var tok token.Token
+	
+	l.skipWhitespace()
 	// any new bytes are converted into a token for AST 
 	switch l.ch {
 		case '=':
@@ -56,7 +43,51 @@ func (l *Lexer) NextToken() token.Token {
 		case 0: // eof char, the 0 byte is same as EOF
 			tok.Literal = ""
 			tok.Type = token.EOF
+		// adding support for keywords and identifiers
+		default:
+			if isLetter(l.ch) {
+				tok.Literal = l.readIdentifier()
+				tok.Type = token.LookupIdent(tok.Literal)
+				return tok // early return to not advance to far
+			} else {
+				tok = newToken(token.ILLEGAL, l.ch)
+			}
 	}
 	l.readChar()
 	return tok 
+}
+
+func (l *Lexer) skipWhitespace() {
+	for l.ch == ' ' || l.ch == '\t' || l.ch == '\n' || l.ch == '\r' {
+		l.readChar()
+	}
+}
+// go to next char in string and advance our position pointers
+func (l *Lexer) readChar() {	
+	// TODO: support unicode/emojis... right now reads each token into one byte
+	if l.readPosition >= len(l.input) {
+		l.ch = 0
+	} else {
+		l.ch = l.input[l.readPosition]
+	}
+	l.position = l.readPosition
+	l.readPosition += 1
+}
+
+// read the identifier (names of things in our program) for all its chars
+// and advnace the lexer's position until non letter char
+func (l *Lexer) readIdentifier() string {
+	position := l.position
+	for isLetter(l.ch) {
+		l.readChar()
+	}
+	return l.input[position:l.position]
+}
+
+func isLetter(ch byte) bool {
+	return 'a' <= ch && ch <= 'z' || 'A' <= ch && ch <= 'Z' || ch == '_'
+}
+
+func newToken(tokenType token.TokenType, ch byte) token.Token {
+	return token.Token{Type: tokenType, Literal: string(ch)}
 }
