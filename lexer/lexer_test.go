@@ -1,8 +1,9 @@
 package lexer
 
 import (
+	"fmt"
 	"testing"
-	
+
 	"github.com/JamesVpog/go-interpreter/token"
 )
 
@@ -67,8 +68,8 @@ func TestNextToken(t *testing.T) {
 		tok := l.NextToken()
 		
 		if tok.Type != tt.expectedType {
-			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q", i, tt.expectedType, tok.Type)
-			
+			fmt.Printf("t: %v\n", tok.Type)
+			t.Fatalf("tests[%d] - tokentype wrong. expected=%q, got=%q", i, tt.expectedType, tok.Type)	
 		}
 		
 		if tok.Literal != tt.expectedLiteral {
